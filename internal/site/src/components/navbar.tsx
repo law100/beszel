@@ -4,6 +4,7 @@ import {
 	ContainerIcon,
 	DatabaseBackupIcon,
 	HardDriveIcon,
+	LayoutDashboardIcon,
 	LogOutIcon,
 	LogsIcon,
 	MenuIcon,
@@ -96,6 +97,13 @@ export default function Navbar() {
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
 							<DropdownMenuItem
+								onClick={() => navigate(getPagePath($router, "business"))}
+								className="flex items-center"
+							>
+								<LayoutDashboardIcon className="h-4 w-4 me-2.5" strokeWidth={1.5} />
+								业务概览
+							</DropdownMenuItem>
+							<DropdownMenuItem
 								onClick={() => navigate(getPagePath($router, "containers"))}
 								className="flex items-center"
 							>
@@ -158,6 +166,18 @@ export default function Navbar() {
 				className="hidden md:flex items-center ms-auto"
 				onMouseEnter={() => import("@/components/routes/settings/general")}
 			>
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<Link
+							href={getPagePath($router, "business")}
+							className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}
+							aria-label="业务概览"
+						>
+							<LayoutDashboardIcon className="h-[1.2rem] w-[1.2rem]" strokeWidth={1.5} />
+						</Link>
+					</TooltipTrigger>
+					<TooltipContent>业务概览</TooltipContent>
+				</Tooltip>
 				<Tooltip>
 					<TooltipTrigger asChild>
 						<Link

@@ -1,0 +1,20 @@
+[Unit]
+Description=Read-only Law100 business overview snapshot
+After=local-fs.target
+
+[Service]
+Type=oneshot
+User=root
+Group=law100-beszel
+ExecStart=/usr/bin/python3 -B /opt/law100-dashboard/business_collect.py
+UMask=0027
+NoNewPrivileges=true
+PrivateNetwork=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/law100-dashboard-business
+RestrictSUIDSGID=true
+MemoryMax=192M
+TimeoutStartSec=20
+Nice=10

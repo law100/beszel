@@ -1,0 +1,11 @@
+[Unit]
+Description=Refresh read-only business overview
+
+[Timer]
+OnBootSec=20s
+OnUnitInactiveSec=15s
+AccuracySec=1s
+Unit=law100-dashboard-business.service
+
+[Install]
+WantedBy=timers.target
