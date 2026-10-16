@@ -4,7 +4,6 @@ import {
 	ArrowDownUpIcon,
 	ArrowUpRightIcon,
 	CheckCircle2Icon,
-	ClockIcon,
 	CloudIcon,
 	DatabaseBackupIcon,
 	FolderIcon,
@@ -152,7 +151,7 @@ function Empty({ children }: { children: ReactNode }) {
 		</div>
 	)
 }
-function Metric({ label, value, detail, icon }: { label: string; value: string; detail: string; icon: ReactNode }) {
+function Metric({ label, value, detail, icon }: { label: string; value: string; detail?: string; icon: ReactNode }) {
 	return (
 		<Card className="min-w-0 shadow-none">
 			<CardContent className="p-4 sm:p-5">
@@ -161,7 +160,7 @@ function Metric({ label, value, detail, icon }: { label: string; value: string; 
 					{icon}
 				</div>
 				<div className="mt-4 break-words text-2xl font-semibold tracking-tight tabular-nums sm:text-3xl">{value}</div>
-				<p className="mt-2 text-xs text-muted-foreground">{detail}</p>
+				{detail && <p className="mt-2 text-xs text-muted-foreground">{detail}</p>}
 			</CardContent>
 		</Card>
 	)
@@ -208,7 +207,7 @@ export default function Business() {
 			setData(result)
 			setError(null)
 		} catch (e) {
-			setError(e instanceof Error && e.name !== "AbortError" ? e.message : "请求超时，保留上次数据。")
+			setError(e instanceof Error && e.name !== "AbortError" ? e.message : "请求超时，请重试。")
 		} finally {
 			clearTimeout(timeout)
 			controller.current = null
@@ -244,13 +243,7 @@ export default function Business() {
 	return (
 		<div className="space-y-5 pb-8">
 			<header className="flex flex-wrap items-start justify-between gap-4 py-1">
-				<div>
-					<div className="flex items-center gap-3">
-						<h1 className="text-2xl font-semibold tracking-tight">业务概览</h1>
-						<Badge>只读</Badge>
-					</div>
-					<p className="mt-2 text-sm text-muted-foreground">容量、资料导入与维护状态。</p>
-				</div>
+				<h1 className="text-2xl font-semibold tracking-tight">业务概览</h1>
 				<div className="flex items-center gap-3">
 					<span className="text-xs text-muted-foreground tabular-nums">
 						{data ? `更新于 ${date(data.generatedAt)}` : "正在获取数据"}
@@ -267,7 +260,7 @@ export default function Business() {
 					className="flex flex-wrap items-center gap-3 rounded-md border border-amber-500/25 bg-amber-500/5 p-4 text-sm"
 				>
 					<AlertCircleIcon className="h-4 w-4 shrink-0" />
-					<span>{error ?? "数据采集暂未更新，以下为上次记录。"}</span>
+					<span>{error ?? "数据待更新"}</span>
 					{error?.includes("登录") && (
 						<a href={prependBasePath("/_auth/login?return=/business")} className="underline underline-offset-4">
 							重新登录
@@ -286,13 +279,13 @@ export default function Business() {
 						<Metric
 							label="网盘剩余容量"
 							value={bytes(remaining)}
-							detail={capacityKnown ? `${accounts.length} 个账户 · 配置容量 / 缓存统计` : "等待完整容量统计"}
+							detail={capacityKnown ? `${accounts.length} 个账户` : "容量更新中"}
 							icon={<CloudIcon className="h-4 w-4" />}
 						/>
 						<Metric
 							label="资料总量"
 							value={bytes(data?.library?.totalBytes)}
-							detail={data?.library ? `${count(data.library.fileCount)} 个文件 · 导入记录口径` : "暂无资料库数据"}
+							detail={data?.library ? `${count(data.library.fileCount)} 个文件` : "暂无资料库数据"}
 							icon={<FolderIcon className="h-4 w-4" />}
 						/>
 						<Metric
@@ -310,7 +303,7 @@ export default function Business() {
 						<Metric
 							label="待处理事项"
 							value={data ? count(data.issues.length) : "—"}
-							detail={data ? (data.issues.length ? "查看右侧异常汇总" : "已采集项目暂无异常") : "暂无数据"}
+							detail={data ? (data.issues.length ? undefined : "暂无异常") : "暂无数据"}
 							icon={<ShieldCheckIcon className="h-4 w-4" />}
 						/>
 					</div>
@@ -379,9 +372,6 @@ export default function Business() {
 												{current.issue}
 											</p>
 										)}
-										<p className="text-xs text-muted-foreground">
-											进度包含下载与上传；文件确认入库后才计为完成。速度不足以估算时不显示剩余时间。
-										</p>
 									</div>
 								) : (
 									<Empty>{tasks ? "当前没有正在导入的任务" : "暂无任务数据"}</Empty>
@@ -410,7 +400,7 @@ export default function Business() {
 								) : (
 									<div className="flex min-h-28 flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
 										<CheckCircle2Icon className="h-7 w-7 text-emerald-500" />
-										{data ? "已采集项目暂无异常" : "暂无数据"}
+										{data ? "暂无异常" : "暂无数据"}
 									</div>
 								)}
 							</CardContent>
@@ -444,12 +434,12 @@ export default function Business() {
 											</div>
 											<Meter value={a.usedBytes != null && a.totalBytes ? (a.usedBytes / a.totalBytes) * 100 : null} />
 											<div className="flex flex-wrap justify-between gap-2 text-xs text-muted-foreground">
-												<span>配置容量 · {a.usageState === "scanning" ? "统计更新中" : "缓存统计"}</span>
+												{a.usageState === "scanning" && <span>更新中</span>}
 												<span>
-													{a.scannedAt ? `${date(a.scannedAt)}${a.usageStale ? " · 待更新" : ""}` : "暂无已用量统计"}
+													{a.scannedAt ? `更新于 ${date(a.scannedAt)}${a.usageStale ? " · 待更新" : ""}` : "暂无用量数据"}
 												</span>
 											</div>
-											<p className="text-xs text-muted-foreground">记录授权到期：{date(a.expiresAt)}</p>
+											<p className="text-xs text-muted-foreground">授权到期：{date(a.expiresAt)}</p>
 										</div>
 									))
 								) : (
@@ -478,7 +468,7 @@ export default function Business() {
 														{count(t.completedFiles)} 个文件 · {bytes(t.completedBytes)}
 													</span>
 													<span>历时 {duration(t.elapsedSeconds)}</span>
-													<span title="按任务总历时计算，包含等待与暂停">
+													<span>
 														全程平均 {t.averageBytesPerSecond != null ? `${bytes(t.averageBytesPerSecond)}/s` : "—"}
 													</span>
 												</div>
@@ -498,9 +488,6 @@ export default function Business() {
 								<Badge>{data?.library ? `${count(data.library.shareCount)} 个分享` : "暂无数据"}</Badge>
 							</CardHeader>
 							<CardContent>
-								<p className="mb-4 text-xs leading-relaxed text-muted-foreground">
-									按已确认导入记录去重汇总；云盘后续的删除和改名未实时盘点。
-								</p>
 								{data?.library?.recent.length ? (
 									<ul className="divide-y">
 										{data.library.recent.map((r, i) => (
@@ -531,7 +518,7 @@ export default function Business() {
 									<DatabaseBackupIcon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
 									<div className="min-w-0 flex-1">
 										<div className="flex items-center justify-between gap-3 text-sm">
-											<span className="font-medium">自动备份</span>
+											<span className="font-medium">本地备份</span>
 											<Badge warning={!data?.maintenance?.backup || data.maintenance.backup.state !== "ready"}>
 												{!data?.maintenance?.backup
 													? "暂无数据"
@@ -545,7 +532,6 @@ export default function Business() {
 												? `${date(data.maintenance.backup.completedAt)} · ${bytes(data.maintenance.backup.sizeBytes)}`
 												: "暂无备份数据"}
 										</p>
-										<p className="mt-1 text-xs text-muted-foreground">本机备份，尚未配置异地备份。</p>
 									</div>
 								</div>
 								<div className="space-y-3">
@@ -570,10 +556,6 @@ export default function Business() {
 							</CardContent>
 						</Card>
 					</div>
-					<footer className="flex items-center gap-2 px-1 text-xs text-muted-foreground">
-						<ClockIcon className="h-3.5 w-3.5" />
-						页面可见时每 15 秒更新，仅展示数据，不执行网盘或任务操作。
-					</footer>
 				</>
 			)}
 		</div>
