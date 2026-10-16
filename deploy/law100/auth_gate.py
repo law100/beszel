@@ -11,6 +11,13 @@ import secrets
 
 CONFIG = json.loads(Path('/etc/law100-dashboard/gate.json').read_text())
 
+def explicitly_signed_out(cookie_header):
+    jar=SimpleCookie()
+    try:jar.load(cookie_header)
+    except CookieError:return False
+    marker=jar.get('__Host-law100-dashboard-signed-out')
+    return marker is not None and marker.value=='1'
+
 def login_location(value):
     if not isinstance(value,str) or len(value)>2048 or re.search(r'[\x00-\x1f\x7f\\]',value):value='/'
     parts=urllib.parse.urlsplit(value)
@@ -18,6 +25,7 @@ def login_location(value):
     return '/_auth/login?return='+urllib.parse.quote(value,safe='')
 
 def authorized_identity(cookie_header):
+    if explicitly_signed_out(cookie_header):return 401, None
     jar = SimpleCookie()
     try:
         jar.load(cookie_header)
@@ -45,7 +53,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/login':
             self.send_response(302)
-            self.send_header('Location',login_location(self.headers.get('X-Original-URI','/')))
+            self.send_header('Location','/_auth/signed-out' if explicitly_signed_out(self.headers.get('Cookie','')) else login_location(self.headers.get('X-Original-URI','/')))
             self.send_header('Cache-Control','private, no-store')
             self.send_header('Content-Length','0')
             self.end_headers()

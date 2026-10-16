@@ -1,4 +1,6 @@
 // Auth-side helpers. No config, database or network is opened by this module.
+export const DASHBOARD_SIGNED_OUT_COOKIE = '__Host-law100-dashboard-signed-out';
+
 export function authContentSecurityPolicy(applications, issuer) {
   const origins = new Set([new URL(issuer).origin]);
   for (const app of Object.values(applications)) origins.add(new URL(`https://${app.host}`).origin);

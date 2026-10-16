@@ -77,6 +77,15 @@ opens `/_auth/signed-out`. The landing page does not automatically sign back in.
 Dashboard logout removes only that app session; central SSO, Drive and other app
 sessions remain valid. Other clients keep their previous logout semantics.
 
+An explicit Dashboard logout also sets the secure HttpOnly host-only
+`__Host-law100-dashboard-signed-out` preference for 15 days. The gate rejects
+protected requests while it is present and sends a fresh visit to the signed-out
+landing page instead of automatically invoking SSO. Only a successful explicit
+Dashboard login callback clears it. This preference never grants access and does
+not change the owner/role checks or the central SSO lifetime. Apply the follow-up
+with `deploy_logout_marker.py` after uploading the updated gate and helper; it
+does not run tests, browser checks, builds or restart business workers.
+
 Auth's form-action CSP is generated from the already registered app hosts. This
 includes Dashboard without wildcard origins or changes to role/owner checks.
 The internal login redirect URL-encodes and allowlists the requested Beszel page,
