@@ -18,6 +18,14 @@ class Response:
     def read(self):return json.dumps(self.value).encode()
 
 class GateTests(unittest.TestCase):
+    def test_return_target_preserves_page_and_query(self):
+        self.assertEqual(gate.login_location('/business?view=a&x=b'),'/_auth/login?return=%2Fbusiness%3Fview%3Da%26x%3Db')
+        self.assertIn('%2Fsystem%2Fabc123',gate.login_location('/system/abc123'))
+
+    def test_return_target_rejects_open_redirect_and_auth_loop(self):
+        for value in ['//evil.test/','https://evil.test/','/\\evil.test/','/business\r\nLocation: evil','/_auth/logout','/api/health','/_law100-ui/assets/a.js','/%2f%2fevil.test']:
+            self.assertEqual(gate.login_location(value),'/_auth/login?return=%2F')
+
     def test_anonymous_and_non_owner(self):
         self.assertEqual(gate.authorized_identity(''),(401,None))
         with patch.object(gate.urllib.request,'urlopen',return_value=Response({'authenticated':True,'userId':'another','role':'super_admin'})):

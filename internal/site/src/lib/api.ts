@@ -6,6 +6,7 @@ import { dynamicActivate, getLocale } from "@/lib/i18n"
 import type { ChartTimes, UserSettings } from "@/types"
 import { $alerts, $allSystemsById, $allSystemsByName, $userSettings, hydrateUserSettings } from "./stores"
 import { chartTimeData, debounce } from "./utils"
+import { endUnifiedSession } from "./unified-auth"
 
 /** PocketBase JS Client */
 export const pb = new PocketBase(basePath)
@@ -51,6 +52,27 @@ export function logOut() {
 	sessionStorage.setItem("lo", "t") // prevent auto login on logout
 	pb.authStore.clear()
 	pb.realtime.unsubscribe()
+}
+
+let loggingOut = false
+/** Explicit menu action only; automatic auth failures must not revoke sessions. */
+export async function logOutFromMenu() {
+	if (globalThis.BESZEL?.AUTH_MODE !== "law100") return logOut()
+	if (loggingOut) return
+	loggingOut = true
+	try {
+		await endUnifiedSession(fetch, basePath.replace(/\/$/, ""))
+		logOut()
+		window.location.replace(`${basePath.replace(/\/$/, "")}/_auth/signed-out`)
+	} catch (error) {
+		toast({
+			title: "退出失败",
+			description: error instanceof Error ? error.message : "请稍后重试。",
+			variant: "destructive",
+		})
+	} finally {
+		loggingOut = false
+	}
 }
 
 /** Save a partial update to user settings in database immediately */

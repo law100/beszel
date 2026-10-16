@@ -30,7 +30,7 @@ import {
 	DropdownMenuSubTrigger,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { isAdmin, isReadOnlyUser, logOut, pb } from "@/lib/api"
+import { isAdmin, isReadOnlyUser, logOutFromMenu, pb } from "@/lib/api"
 import { cn, runOnce } from "@/lib/utils"
 import { AddSystemDialog } from "./add-system"
 import { Logo } from "./logo"
@@ -151,7 +151,7 @@ export default function Navbar() {
 						</DropdownMenuGroup>
 						<DropdownMenuSeparator />
 						<DropdownMenuGroup>
-							<DropdownMenuItem onSelect={logOut} className="flex items-center">
+							<DropdownMenuItem onSelect={logOutFromMenu} className="flex items-center">
 								<LogOutIcon className="h-4 w-4 me-2.5" />
 								<Trans>Log Out</Trans>
 							</DropdownMenuItem>
@@ -249,7 +249,7 @@ export default function Navbar() {
 								<DropdownMenuSeparator />
 							</>
 						)}
-						<DropdownMenuItem onSelect={logOut}>
+						<DropdownMenuItem onSelect={logOutFromMenu}>
 							<LogOutIcon className="me-2.5 h-4 w-4" />
 							<span>
 								<Trans>Log Out</Trans>

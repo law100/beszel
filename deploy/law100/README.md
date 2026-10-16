@@ -64,6 +64,35 @@ aligned with the official Hub version. Rebase and test before upgrading either.
 Run `python -B -m unittest discover -s deploy/law100 -v`, plus frontend typecheck
 and build. Tests use isolated temporary databases and do not contact production.
 
+## Unified login/logout repair
+
+The customized build sets `AUTH_MODE: "law100"`; other Beszel installations keep
+their native authentication behavior. `UnifiedLogin` performs the trusted-header
+auth refresh and provides an explicit Auth entry if bootstrap fails. It never
+offers a separate local password form.
+
+The explicit logout menu obtains the existing app-session CSRF token, POSTs to
+`/_auth/logout`, waits for confirmed revocation, clears local Beszel auth, and
+opens `/_auth/signed-out`. The landing page does not automatically sign back in.
+Dashboard logout removes only that app session; central SSO, Drive and other app
+sessions remain valid. Other clients keep their previous logout semantics.
+
+Auth's form-action CSP is generated from the already registered app hosts. This
+includes Dashboard without wildcard origins or changes to role/owner checks.
+The internal login redirect URL-encodes and allowlists the requested Beszel page,
+preserving deep links without redirecting back into auth/API/resource paths.
+
+`deploy_auth_flow.py` applies the narrow Auth/Nginx/verifier changes with a private
+pre-change SQLite/code backup. It restarts only Auth and the Dashboard verifier,
+then reloads Nginx; business workers, Hub and Agent remain untouched. Upload the
+audited `auth_gate.py` as `auth_gate.next.py` and `dashboard-flow.mjs` as
+`dashboard-flow.next.mjs` under `/opt/law100-dashboard` before running it. Deploy
+the new frontend via `install_ui.py` afterwards. The Auth helper is also required
+when restoring the modified Auth server source; do not restore just one file.
+
+Additional offline tests: `node --experimental-strip-types --test
+deploy/law100/unified_auth.test.mjs` (Node 24). No production credentials needed.
+
 ## Rollback and recovery
 
 For immediate UI rollback, restore the previous Nginx site and verifier from the

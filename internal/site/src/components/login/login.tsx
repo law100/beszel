@@ -7,11 +7,60 @@ import { pb } from "@/lib/api"
 import { Logo } from "../logo"
 import { ModeToggle } from "../mode-toggle"
 import { $router } from "../router"
+import { prependBasePath } from "../router"
+import { $authenticated } from "@/lib/stores"
+import { buttonVariants } from "@/components/ui/button"
 import { useTheme } from "../theme-provider"
 import ForgotPassword from "./forgot-pass-form"
 import { OtpRequestForm } from "./otp-forms"
 
-export default function () {
+export default function Login() {
+	return globalThis.BESZEL?.AUTH_MODE === "law100" ? <UnifiedLogin /> : <NativeLogin />
+}
+
+function UnifiedLogin() {
+	const [failed, setFailed] = useState(false)
+	useEffect(() => {
+		let live = true
+		sessionStorage.removeItem("lo")
+		pb.collection("users")
+			.authRefresh()
+			.then((result) => {
+				if (!live) return
+				pb.authStore.save(result.token, result.record)
+				$authenticated.set(pb.authStore.isValid)
+			})
+			.catch(() => {
+				if (live) setFailed(true)
+			})
+		return () => {
+			live = false
+		}
+	}, [])
+	return (
+		<div className="min-h-svh grid place-items-center px-5">
+			<div className="max-w-sm space-y-5 text-center">
+				<Logo className="mx-auto h-7 fill-foreground" />
+				<h1 className="text-xl font-semibold">{failed ? "请使用统一账户登录" : "正在进入 Dashboard"}</h1>
+				<p className="text-sm text-muted-foreground" role="status">
+					{failed ? "登录状态已失效或暂时无法连接，请重新登录。" : "正在确认登录状态…"}
+				</p>
+				{failed && (
+					<a
+						className={buttonVariants()}
+						href={prependBasePath(
+							"/_auth/login?return=" + encodeURIComponent(window.location.pathname + window.location.search)
+						)}
+					>
+						使用 Auth 登录
+					</a>
+				)}
+			</div>
+		</div>
+	)
+}
+
+function NativeLogin() {
 	const page = useStore($router)
 	const [isFirstRun, setFirstRun] = useState(false)
 	const [authMethods, setAuthMethods] = useState<AuthMethodsList>()

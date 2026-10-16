@@ -25,7 +25,7 @@ index=release/'index.html'
 html=index.read_text()
 assert 'globalThis.BESZEL = "{info}"' in html
 html=html.replace('<head>','<head>\n\t\t<base href="/">').replace('./assets/','/_law100-ui/assets/')
-html=html.replace('globalThis.BESZEL = "{info}"','globalThis.BESZEL = '+json.dumps({'BASE_PATH':'/','HUB_URL':'https://dashboard.law100.xyz','HUB_VERSION':'0.21.0','OAUTH_DISABLE_POPUP':False}))
+html=html.replace('globalThis.BESZEL = "{info}"','globalThis.BESZEL = '+json.dumps({'BASE_PATH':'/','HUB_URL':'https://dashboard.law100.xyz','HUB_VERSION':'0.21.0','OAUTH_DISABLE_POPUP':False,'AUTH_MODE':'law100'}))
 index.write_text(html)
 release.chmod(0o755)
 for p in release.rglob('*'):p.chmod(0o755 if p.is_dir() else 0o644)
