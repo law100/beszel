@@ -73,18 +73,28 @@ offers a separate local password form.
 
 The explicit logout menu obtains the existing app-session CSRF token, POSTs to
 `/_auth/logout`, waits for confirmed revocation, clears local Beszel auth, and
-opens `/_auth/signed-out`. The landing page does not automatically sign back in.
+opens `/_auth/signed-out`. This compatibility URL now redirects to the login
+entry immediately; there is no signed-out landing page.
 Dashboard logout removes only that app session; central SSO, Drive and other app
 sessions remain valid. Other clients keep their previous logout semantics.
 
 An explicit Dashboard logout also sets the secure HttpOnly host-only
 `__Host-law100-dashboard-signed-out` preference for 15 days. The gate rejects
-protected requests while it is present and sends a fresh visit to the signed-out
-landing page instead of automatically invoking SSO. Only a successful explicit
-Dashboard login callback clears it. This preference never grants access and does
+protected requests while it is present and sends a fresh visit straight to the
+Auth credential form rather than silently reusing the central SSO session.
+The existing 15-minute flow binds the form authentication, browser flow cookie,
+OIDC callback, and newly created central session. The callback must match this
+freshly authenticated session before clearing the marker. The original page is
+kept in the flow, not an arbitrary external redirect. Other apps' central sessions
+are preserved during this Dashboard-only reauthentication.
+Only a successful Dashboard login callback clears the marker. It never grants access and does
 not change the owner/role checks or the central SSO lifetime. Apply the follow-up
 with `deploy_logout_marker.py` after uploading the updated gate and helper; it
 does not run tests, browser checks, builds or restart business workers.
+
+Apply the subsequent direct-Auth redirect with `deploy_relogin_redirect.py`,
+using the same staged gate/helper filenames. It backs up the changed files and
+restarts only Auth and the dashboard verifier, without tests or frontend builds.
 
 Auth's form-action CSP is generated from the already registered app hosts. This
 includes Dashboard without wildcard origins or changes to role/owner checks.

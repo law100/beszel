@@ -1,6 +1,12 @@
 // Auth-side helpers. No config, database or network is opened by this module.
 export const DASHBOARD_SIGNED_OUT_COOKIE = '__Host-law100-dashboard-signed-out';
 
+// Only this host/path and a single opaque flow binding may return from Auth.
+export function dashboardReauthBinding(value) {
+  if (typeof value !== 'string') return null;
+  return /^https:\/\/dashboard\.law100\.xyz\/_auth\/login\?reauth=([A-Za-z0-9_-]{43})$/.exec(value)?.[1] ?? null;
+}
+
 export function authContentSecurityPolicy(applications, issuer) {
   const origins = new Set([new URL(issuer).origin]);
   for (const app of Object.values(applications)) origins.add(new URL(`https://${app.host}`).origin);
